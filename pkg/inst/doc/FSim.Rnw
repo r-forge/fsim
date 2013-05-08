@@ -1,0 +1,145 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{Sweave}
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rpackage}[1]{{\textit{#1}}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+\title{An introduction to FSim}
+\author{Qiang Hu, Song Liu}
+\begin{document}
+\SweaveOpts{engine=R}
+%\VignetteIndexEntry{Using FSim}
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+FSim is an R package to search functionally similar (FSim) genes for objective gene, a set of functional keywords or a biological pathway. The function compare the functional relation between genes based on the Gene Ontology annotation. A new algorithm is proposed to analyze the relation between genes based on the GO annotation of genes. Our package is able to search the most functionally similar genes by comparing the GO terms between genes.
+
+<<load>>=
+library(FSim)
+@ 
+
+\section{Similar score calculation}
+\subsection{Comparison between two genes}
+A algorithm is proposed to compare the functionally similarity between two genes. Given two gene IDs, the function \Rfunction{calSim} can calculate the similar scores based on annotated GO terms in different ontology or terms from "ALL" ontologies. For example, the similarity between human gene "9" and "10" can be calculated as follows.
+<<calSim1>>=
+calSim(g1="9", g2="10", ontology="BP", an.go=an.Hs.egGO)
+calSim(g1="9", g2="10", ontology="ALL", an.go=an.Hs.egGO)
+@ 
+
+\subsection{Comparison between gene and GO terms}
+Given a gene and a group of GO terms, the functional relation can also be calculated.
+<<calSim2>>=
+terms <- names(get("10", org.Hs.egGO))
+calSim(g1="9", tids=terms, an.go=an.Hs.egGO)
+@ 
+
+\section{Search example}
+\subsection{Search by gene}
+The function \Rfunction{SearchGene} can be used to search functionally similar genes for an objective gene. For example, we can use the function to find the most funcionally related genes for an objective gene "NAT2" in the GO annotation database.
+<<SearchGene>>=
+SearchGene(symbol="NAT2", an.go=an.Hs.egGO, targets="ALL", n=10)
+@ 
+The option n is set to 10, then the function return 10 functionally related genes ordered by Z values. The search database can be set by the targets option, which can be "ALL" to search in all GO annotated genes and abso can be a set of customized genes to specify search range. For example, the function between gene "9" and a gene set can be compared d by the option "targets".
+<<SearchGeneSet>>=
+SearchGene(gene="9", targets=c("10", "100", "124"), 
+           an.go=an.Hs.egGO)
+@ 
+
+\subsection{Search by GO terms}
+A group of GO terms can aslo be used to search functionally related genes. For exmaple, 
+<<SearchTerm>>=
+t1 <- names(get("9", org.Hs.egGO))
+t1
+SearchGene(terms=t1, an.go=an.Hs.egGO, n=5)
+@ 
+
+\subsection{Search by keywords}
+The function can also be used to analyze the functionally similar genes with a group of biological keywords. For example, we try to search for genes related with function "chromatin remodeling" and "histone binding".
+<<SearchKeywords>>=
+t2 <- SearchTerm(fun=c("chromatin remodeling", "histone binding"))
+t2
+@ 
+Then we select part of the returned GO terms to search function related genes.
+<<SearchKeywords>>=
+SearchGene(terms=t2$GOID[c(1,6,8)], an.go=an.Hs.egGO, n=5)
+@ 
+
+\subsection{Search by gene set}
+In order to search functionally similar genes for a gene set, we need summary the objective gene set to a group of GO terms first. GO over-represent analysis can be used to discover major biological functions for a gene set. The \Rfunction{ovreGO} integrated functions from \Rpackage{topGO} can be used to find over-represented GO terms for a gene set. For example, we have a gene set from KEGG database.
+<<SearchGeneSet>>=
+library(KEGG.db)
+geneset <- get("hsa00232", KEGGPATHID2EXTID)
+geneset
+@ 
+The function \Rfunction{ovreGO} can be used to find major represent terms. All human genes from KEGG database are used as backgroud.
+<<SearchGeneSet>>=
+paths <- as.list(KEGGPATHID2EXTID)
+paths <- paths[grep("^hsa", names(paths))]
+allgenes <- unique(unlist(paths))
+BPterms <- ovreGO(genes=geneset, allgenes=allgenes, 
+                  ontology="BP", nterm=10)
+BPterms
+@ 
+The results from \Rfunction{ovreGO} show the most over-represented terms ordered by p values. Top 10 GO terms are used to stand for the the major biological functions of the gene set.
+<<SearchGeneSet>>=
+SearchGene(terms=BPterms$GO.ID, targets="ALL", 
+           an.go=an.Hs.egGO, n=5)
+@ 
+The returned genes are all from "CYP" gene family because most of the interested gene set are also from this family.
+
+\section{Evaluation}
+The functionally related genes should get higer similar scores as our method proposed. Here we use a set of genes from KEGG pathway to simply evaluate our method. First, we use GO over-represented algorithm to find the major functions of the gene set. Then the over-represented GO terms are used to calculate the similar scores with the gene set and other randomly selected genes using our method.
+<<evaluation>>=
+MFterms <- ovreGO(genes=geneset, allgenes=allgenes, 
+                  ontology="MF", nterm=10)
+CCterms <- ovreGO(genes=geneset, allgenes=allgenes, 
+                  ontology="CC", nterm=10)
+allterms <- c(BPterms$GO.ID, MFterms$GO.ID, CCterms$GO.ID)
+@ 
+The gene set from the pathway is a group of genes related in biological process, molecular function and cellular component, so GO terms from the three ontologies are used. The \Robject{allterms} are the over-represented GO terms to do the comparisons.
+<<evaluation>>=
+score1 <- SearchGene(terms=allterms, targets=geneset, 
+                     an.go=an.Hs.egGO, ontology="ALL", 
+                     term2ancestor=FALSE)
+score1
+@ 
+Then we randomly select 100 genes as control group to calculate the similar scores.
+<<evaluation>>=
+set.seed(1)
+ctlgene <- sample(setdiff(allgenes, geneset), 50)
+score2 <- SearchGene(terms=allterms, targets=ctlgene, 
+                     an.go=an.Hs.egGO, ontology="ALL", 
+                     term2ancestor=FALSE)
+head(score2)
+pv <- suppressWarnings(ks.test(score1$z.value, score2$z.value))
+pv
+@ 
+The \Rfunction{ks.test} shows the two scores are significantly different. The scores from the \Robject{geneset} are significantly higer than the randomly selected genes. A boxplot can be used to show the detailed distribution of the two groups of scores.
+<<evaluation1, fig=TRUE>>=
+boxplot(score1$z.value, score2$z.value, 
+        names=c("score1", "score2"), 
+        main=paste("KS test: ", format(pv$p.value, digits=4)))
+@ 
+
+\section{Visualization}
+\subsection{Heatmap}
+Basically, functionally related genes share part of GO terms. The search results only show the number of shared terms. The details can be plotted with heatmap.
+<<heatmap, fig=TRUE>>=
+res1 <- SearchGene(symbol="NAT2", an.go=an.Hs.egGO, 
+                   targets="ALL", n=10, plot=TRUE)
+@ 
+\subsection{Wordcloud}
+The GO over-represent analysis return the major biological functions of a gene set. The results can also be visualized by word cloud plot. The function \Rfunction{ovreGO} can also be used to plot the wordcloud with the option "plot=TRUE".
+<<wordcloud, fig=TRUE>>=
+res2 <- ovreGO(genes=geneset, allgenes=allgenes, 
+               ontology="BP", plot=TRUE, scale=c(1,0.5))
+@ 
+
+\section{Session information}
+<<session>>=
+sessionInfo()
+@ 
+
+\end{document}

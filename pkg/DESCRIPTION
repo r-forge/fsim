@@ -1,0 +1,11 @@
+Package: FSim
+Type: Package
+Title: A package to search functionally similar genes
+Version: 0.1.4
+Date: 2013-4-27
+Author: Qiang Hu
+Maintainer: Who to complain to <yourfault@somewhere.net>
+Depends: R (>= 2.15), BiocGenerics, GO.db, org.Hs.eg.db, topGO, vcd, wordcloud, RColorBrewer, ggplot2, reshape2
+Description: The package can be used to search functionally similar genes by given a gene, a group of GO terms or a list of keywords.
+License: GPL
+LazyData: true
