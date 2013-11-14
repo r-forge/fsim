@@ -13,18 +13,24 @@ SearchTerm <- function(fun, fuzzy=FALSE, method="union"){
 }
 
 #SearchGene.R
-SearchGene <- function(gene=NULL, symbol=NULL, terms=NULL, targets="ALL", n=50, an.go, ontology="ALL", term2ancestor=TRUE, plot=FALSE){
+SearchGene <- function(gene=NULL, symbol=NULL, terms=NULL, targets="ALL", n=50, an.go, ontology="ALL", term2ancestor=TRUE, map="org.Hs.eg.db", plot=FALSE){
+  require(package=map, character.only=TRUE)
+  eval(parse(text=paste("mapGO <- ",sub(".db$", "", map),"GO", sep="")))
+  eval(parse(text=paste("mapSYMBOL2EG <- ",sub(".db$", "", map),"SYMBOL2EG", sep="")))
+  eval(parse(text=paste("mapSYMBOL <- ",sub(".db$", "", map),"SYMBOL", sep="")))
+  eval(parse(text=paste("mapGO2EG <- ",sub(".db$", "", map),"GO2EG", sep="")))
+  
   if(!is.null(gene)){
-    t1 <- names(mget(gene, org.Hs.egGO, ifnotfound=NA)[[1]])    
+    t1 <- names(mget(gene, mapGO, ifnotfound=NA)[[1]])    
   }else if(!is.null(symbol)){
-    gene <- mget(symbol, org.Hs.egSYMBOL2EG, ifnotfound=NA)[[1]]
-    t1 <- names(mget(gene, org.Hs.egGO, ifnotfound=NA)[[1]])    
+    gene <- mget(symbol, mapSYMBOL2EG, ifnotfound=NA)[[1]]
+    t1 <- names(mget(gene, mapGO, ifnotfound=NA)[[1]])    
   }else if(!is.null(terms)){
     t1 <- as.character(terms)
   }
   
   if(any(targets=="ALL")){
-    g1 <- lapply(mget(t1, org.Hs.egGO2EG, ifnotfound=NA), unique)
+    g1 <- lapply(mget(t1, mapGO2EG, ifnotfound=NA), unique)
     sg <- sort(table(unlist(g1)), decreasing=TRUE)
     if(length(sg)>n){
       if(is.null(gene)){
@@ -38,7 +44,7 @@ SearchGene <- function(gene=NULL, symbol=NULL, terms=NULL, targets="ALL", n=50, 
     sim <- t(sapply(names(sg1), function(x)calSim(g1=x, tids=t1, ontology=ontology, an.go=an.go, term2ancestor=term2ancestor)))
 
   }else{
-    g1 <- lapply(mget(t1, org.Hs.egGO2EG, ifnotfound=NA), unique)
+    g1 <- lapply(mget(t1, mapGO2EG, ifnotfound=NA), unique)
     sg <- sort(table(unlist(g1)), decreasing=TRUE)
     sg1 <- sg[names(sg) %in% targets]
     sg1 <- sg[match(targets, names(sg))]
@@ -46,13 +52,13 @@ SearchGene <- function(gene=NULL, symbol=NULL, terms=NULL, targets="ALL", n=50, 
     names(sg1) <- targets
     sim <- t(sapply(names(sg1), function(x)calSim(g1=x, tids=t1, ontology=ontology, an.go=an.go, term2ancestor=term2ancestor)))
   }
-  Symbol <- unlist(mget(names(sg1), org.Hs.egSYMBOL, ifnotfound=NA))
+  Symbol <- unlist(mget(names(sg1), mapSYMBOL, ifnotfound=NA))
   Sim <- data.frame(Symbol, sharedTerms=sg1, sim)
   Sim <- Sim[order(Sim[,"z.value"], decreasing=TRUE),]
 
   if(plot==TRUE){
     gs <- rownames(Sim)
-    termlist <- mget(gs, org.Hs.egGO, ifnotfound=NA)
+    termlist <- mget(gs, mapGO, ifnotfound=NA)
     termlist <- lapply(termlist, function(x)unique(names(x)))
     tf <- do.call("cbind", lapply(termlist, function(x)t1 %in% x))
     #tn <- Term(t1)

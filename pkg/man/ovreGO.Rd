@@ -10,8 +10,8 @@
 }
 \usage{
 ovreGO(genes, allgenes, ontology = "BP", algorithm = "parentchild",
-statistic = "fisher", nterm = 100, plot = FALSE, nword = 30, min.freq =
-1, scale = c(2, 0.5), ...)
+statistic = "fisher", map = "org.Hs.eg.db", nterm = 100, plot = FALSE,
+nword = 30, min.freq = 1, scale = c(2, 0.5), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -23,6 +23,7 @@ statistic = "fisher", nterm = 100, plot = FALSE, nword = 30, min.freq =
     \code{runTest} function from the topGO package.}
   \item{statistic}{The test method to use. The details can be find in
     the \code{runTest} function.}
+  \item{map}{The GO annotation package}
   \item{nterm}{The number of top over-represented GO terms.}
   \item{plot}{Wether to plot the returned GO terms. If TRUE, the
     wordcloud will be plotted.}

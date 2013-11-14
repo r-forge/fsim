@@ -9,7 +9,7 @@
   ancestor terms based on mapping information.
 }
 \usage{
-g2go(gid, tid = NULL, filter = NULL)
+g2go(gid, tid = NULL, filter = NULL, map = org.Hs.egGO)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,6 +17,7 @@ g2go(gid, tid = NULL, filter = NULL)
   \item{tid}{If \code{tid} is a group of GO IDs instead of NULL, the
     ancestors of input GO IDs will return.} 
   \item{filter}{The evidence code to filter GO terms.}
+  \item{map}{The mapping between gene IDs to go IDs.}
 }
 \details{
 %%  ~~ If necessary, more details than the description above ~~

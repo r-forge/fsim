@@ -7,9 +7,9 @@ t2ancestor <- function(t1a){
 }
 
 #gid to GO including ancestor
-g2go <- function(gid, tid=NULL, filter=NULL){
+g2go <- function(gid, tid=NULL, filter=NULL, map=org.Hs.egGO){
   if(is.null(tid)){
-    terms1 <- get(gid, org.Hs.egGO)
+    terms1 <- get(gid, map)
     if(is.null(names(terms1))){
       return(NA)
     }

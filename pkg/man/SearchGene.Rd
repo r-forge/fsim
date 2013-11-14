@@ -12,7 +12,8 @@
 }
 \usage{
 SearchGene(gene = NULL, symbol = NULL, terms = NULL, targets = "ALL", n
-= 50, an.go, ontology = "ALL", term2ancestor = TRUE, plot = FALSE) 
+= 50, an.go, ontology = "ALL", term2ancestor = TRUE, map =
+"org.Hs.eg.db", plot = FALSE) 
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -33,6 +34,7 @@ SearchGene(gene = NULL, symbol = NULL, terms = NULL, targets = "ALL", n
   \item{term2ancestor}{The option works when terms is not NULL. If TRUE,
     the input term and their ancestor terms will be used. If FALSE, the
     input term will be used directly.}
+  \item{map}{The GO annotation package.}
   \item{plot}{If TRUE, a heatmap will be plotted to show the shared GO
     terms.}
 }
